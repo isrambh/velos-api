@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: velos-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: velos-postgres
+  template:
+    metadata:
+      labels:
+        app: velos-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: velos
+            - name: POSTGRES_USER
+              value: velos
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: velos-secret
+                  key: postgres-password
+          volumeMounts:
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d/init.sql
+              subPath: init.sql
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: init
+          configMap:
+            name: velos-init
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: velos-postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: velos-postgres
+spec:
+  selector:
+    app: velos-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
