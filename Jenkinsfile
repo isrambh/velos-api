@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Tests') {
             steps {
-                sh 'python3 -m unittest discover -s tests -v'
+                sh 'docker build --target test -t velos-api:test .'
             }
         }
 
